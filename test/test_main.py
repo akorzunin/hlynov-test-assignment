@@ -16,11 +16,13 @@ def collect_paths_to_test_files(dir_path: str) -> dict[str, list]:
     rel_file_paths = []
     for root, dirs, files in os.walk(dir_path):
         for file in files:
-            file_path = f'{root}/{file}'
-            rel_file_paths.append(file_path)
-            abs_file_paths.append(
-                os.path.abspath(file_path)
-            )
+            # add only xml files
+            if os.path.splitext(file)[-1] == '.xml':
+                file_path = f'{root}/{file}'
+                rel_file_paths.append(file_path)
+                abs_file_paths.append(
+                    os.path.abspath(file_path)
+                )
     return dict(
         abs_file_paths=abs_file_paths,
         rel_file_paths=rel_file_paths,
@@ -39,10 +41,6 @@ col_descriptions = dict(
     total='Сумма',
 )
 
-@pytest.fixture
-def parser():
-    '''Create parser object'''
-    return app
 
 file_paths = pytest.mark.parametrize(
     "file_path",
@@ -60,10 +58,15 @@ bad_file_paths = pytest.mark.parametrize(
 )
 
 @pytest.fixture
+def parser():
+    '''Create parser object'''
+    return app
+
+@pytest.fixture
 def output() -> list:
     '''Get path to pased file'''
     return app.parse_file(
-        file_path=test_files['abs_file_paths'][0]
+        file_path=test_files['abs_file_paths'][1]
     ), app
 
 @file_paths
@@ -88,9 +91,11 @@ def test_csv_dlim(output: list) -> None:
     df = pd.read_csv(
         filepath_or_buffer=output_file_path,
         delimiter=';',
+        header=None,
+        names=col_descriptions.values(),
         encoding=app.encoding,
     )
-    assert len(df.columns) > 1
+    assert len(df.columns) > 1 and len(df)
     
 def test_logs_exists(output: list) -> None:
     output_file_path, app = output
@@ -129,8 +134,11 @@ def test_csv_fields(output: list) -> None:
     df = pd.read_csv(
         filepath_or_buffer=output_file_path,
         delimiter=';',
+        header=None,
+        names=col_descriptions.values(),
         encoding=app.encoding,
     )
+    # TODO refactor this test
     assert len(df.columns) == len(col_descriptions)
 
 def test_duplicates(output: list) -> None:
@@ -138,7 +146,9 @@ def test_duplicates(output: list) -> None:
     output_file_path, app = output
     df = pd.read_csv(
         filepath_or_buffer=output_file_path,
-        delimiter=',',
+        delimiter=';',
+        header=None,
+        names=col_descriptions.values(),
         encoding=app.encoding,
     )
     df.columns = col_descriptions.values()

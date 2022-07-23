@@ -1,17 +1,20 @@
+import chardet
 import pytest
+import pandas as pd
 import os
 import sys
+import subprocess
 
 PWD = os.path.abspath(os.getcwd())
 sys.path.insert(1, PWD)
 
 from main import app
 
-def collect_paths_to_test_files() -> dict[str, list]:
+def collect_paths_to_test_files(dir_path: str) -> dict[str, list]:
     '''Read content of folder w/ test files and return paths to test files'''
     abs_file_paths = []
     rel_file_paths = []
-    for root, dirs, files in os.walk('./test/test_files'):
+    for root, dirs, files in os.walk(dir_path):
         for file in files:
             file_path = f'{root}/{file}'
             rel_file_paths.append(file_path)
@@ -23,62 +26,148 @@ def collect_paths_to_test_files() -> dict[str, list]:
         rel_file_paths=rel_file_paths,
     )
 
-test_files = collect_paths_to_test_files()
+test_files = collect_paths_to_test_files('./test/test_files')
+bad_test_files = collect_paths_to_test_files('./test/test_bad_files')
 
+col_descriptions = dict(
+    registry_name='Имя файла реестра',
+    date='Дата', 
+    personal_account='Лицевой счет',
+    full_name='ФИО',
+    address='Адрес',
+    period='Период',
+    total='Сумма',
+)
 
 @pytest.fixture
 def parser():
     '''Create parser object'''
     return app
 
-@pytest.mark.parametrize(
+file_paths = pytest.mark.parametrize(
     "file_path",
     [
         *test_files['rel_file_paths'],
         *test_files['abs_file_paths'],
     ]
 )
-def test_valid_file_path(file_path) -> None:
+bad_file_paths = pytest.mark.parametrize(
+    "bad_file_path",
+    [
+        *bad_test_files['rel_file_paths'],
+        *bad_test_files['abs_file_paths'],
+    ]
+)
+
+@pytest.fixture
+def output() -> list:
+    '''Get path to pased file'''
+    return app.parse_file(
+        file_path=test_files['abs_file_paths'][0]
+    ), app
+
+@file_paths
+def test_valid_file_path(file_path: str) -> None:
     assert app.parse_file(
         file_path=file_path,
     )
 
-### questionable tests
-def test_output_encoding() -> None:
-    ...
+@file_paths
+def test_output_encoding(file_path: str) -> None:
+    '''detect encoding of output file'''
+    parsed_file_path = app.parse_file(
+        file_path=file_path,
+    )
+    with open(parsed_file_path, 'rb') as rawdata:
+        result = chardet.detect(rawdata.read(10000))
+        assert result['encoding'] == app.encoding
 
-def test_csv_dlim() -> None:
-    ...
+def test_csv_dlim(output: list) -> None:
+    '''Check delimiter of output file'''
+    output_file_path, app = output
+    df = pd.read_csv(
+        filepath_or_buffer=output_file_path,
+        delimiter=';',
+        encoding=app.encoding,
+    )
+    assert len(df.columns) > 1
+    
+def test_logs_exists(output: list) -> None:
+    output_file_path, app = output
+    folder = os.path.dirname(output_file_path)
+    assert os.path.isfile(folder+'/log/parser.log')
 
-def test_logs_exists() -> None:
-    ...
+@file_paths
+def test_cli_run(file_path: str) -> None:
+    '''Run program w/ test_files as input'''
+    process = subprocess.run(["python", "main.py", file_path])
+    assert not process.returncode
 
-def test_cli_run() -> None:
-    ...
+# TODO cant use output fixture here
+def test_csv_output_loc(output: list) -> None:
+    '''csv file must be in same directory as input file and have same name'''
+    output_file_path, app = output
+    get_name = lambda path: os.path.splitext(os.path.basename(path))[0]
+    get_folder = lambda path: os.path.dirname(path)
+    assert get_name(output_file_path) == get_name(app.file_path)
+    assert get_folder(output_file_path) == get_folder(app.file_path)
 
-def test_csv_output_loc() -> None:
-    ...
+def test_xml_input_loc(output: list) -> None:
+    '''move valid xml to /arh folder\n
+    move invalid xml to /bad folder
+    '''
+    output_file_path, app = output
+    base = os.path.basename(app.file_path)
+    folder = os.path.dirname(app.file_path)
+    assert os.path.isfile(os.path.join(folder, 'arh', base)) or\
+        os.path.isfile(os.path.join(folder, 'bad', base))
 
-def test_xml_input_loc() -> None:
-    ...
 
 
-def test_csv_fields() -> None:
-    ...
+def test_csv_fields(output: list) -> None:
+    output_file_path, app = output
+    df = pd.read_csv(
+        filepath_or_buffer=output_file_path,
+        delimiter=';',
+        encoding=app.encoding,
+    )
+    assert len(df.columns) == len(col_descriptions)
 
-def test_duplicates() -> None:
-    '''csv output should not contain duplicates'''
-    # len csv file == set(csv_file)
-    ...
+def test_duplicates(output: list) -> None:
+    '''csv output should not contain duplicates of fiels personal_account and period'''
+    output_file_path, app = output
+    df = pd.read_csv(
+        filepath_or_buffer=output_file_path,
+        delimiter=',',
+        encoding=app.encoding,
+    )
+    df.columns = col_descriptions.values()
+    assert df.duplicated(
+        subset=[
+            col_descriptions['personal_account'],
+            col_descriptions['period']
+        ],
+    ).any()
 
+
+@bad_file_paths
+def test_bad_xml_input_loc(bad_file_path: str) -> None:
+    '''not xml files have to be moved to /bad folder'''
+    app.parse_file(
+        file_path=bad_test_files['abs_file_paths'][0]
+    )
+    assert os.path.isfile(
+        os.path.join(
+            os.path.dirname(bad_file_path), 
+            'bad', 
+            os.path.basename(bad_file_path)
+        )
+    )
+# TODO validation
 def test_csv_field_validation() -> None:
     # mb use pydantic to validate all csv rows as models
     ...
 
-def test_bad_xml_input_loc() -> None:
-    ...
-
-### over tests
 def test_not_key_field_missing() -> None:
     # handle missing key as blank field
     ...

@@ -1,8 +1,10 @@
 import pytest
 import os
 import sys
-sys.path.insert(1, r'C:\Users\akorz\Documents\hlynov-test-assignment')
-# from src.xml_file_parser import XmlFileParser
+
+PWD = os.path.abspath(os.getcwd())
+sys.path.insert(1, PWD)
+
 from main import app
 
 def collect_paths_to_test_files() -> dict[str, list]:
@@ -25,11 +27,9 @@ test_files = collect_paths_to_test_files()
 
 
 @pytest.fixture
-def parser(valid_file_path):
+def parser():
     '''Create parser object'''
-    return app.parse_file(
-        file_path=valid_file_path
-    )
+    return app
 
 @pytest.mark.parametrize(
     "file_path",

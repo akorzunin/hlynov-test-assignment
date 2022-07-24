@@ -3,6 +3,7 @@ import os
 from src.xml_file_parser import XMLFileParser
 from src.csv_writer import CSVWriter
 from src.logger import get_logger
+from src.validation import Validator
 
 class App(object): 
     '''docstring for App'''
@@ -16,8 +17,13 @@ class App(object):
         self._setup_logger()
         self._validate_file_path()
         self._get_output_path()
+        validator = Validator()
+
         # read xml
-        xml_parser = XMLFileParser(self.file_path)
+        xml_parser = XMLFileParser(
+            file_path=self.file_path,
+            user_fields=validator.user_fields
+        )
         users = xml_parser.parse_xml(
             file_name=self._output_file_name,
             logger=self.logger,
@@ -30,7 +36,7 @@ class App(object):
             users=users,
             encoding=self.encoding,
         )
-
+        self.logger.info(f"File {self._file_path} successfully parsed")
         return self._output_file_path
 
     @property

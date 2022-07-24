@@ -1,0 +1,40 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    
+    "tasks": [
+        {
+            "label": "Parse xml file",
+            "type": "shell",
+            "command": "python main.py ${input:file_path}",
+            "problemMatcher": []
+        },
+        {
+            "label": "Parse test xml file Windows",
+            "type": "shell",
+            "command": "python main.py ${workspaceFolder}\\input\\test_input.xml",
+            "problemMatcher": []
+        },
+        {
+            "label": "Parse test xml file Linux",
+            "type": "shell",
+            "command": "python3 main.py ${workspaceFolder}/input/test_input.xml",
+            "problemMatcher": []
+        },
+        {
+            "label": "Run all tests",
+            "type": "shell",
+            "command": "pytest ./test/test_main.py",
+            "problemMatcher": []
+        },
+    ],
+    "inputs": [
+        {
+            "id": "file_path",
+            "description": "FilePath1:",
+            "default": "./",
+            "type": "promptString"
+        },
+    ]
+}

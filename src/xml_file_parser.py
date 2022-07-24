@@ -1,13 +1,14 @@
 from xml.etree import ElementTree
 from xml.dom import minidom
-from src.validation import user_fields
+# from src.validation import user_fields
 
 class XMLFileParser(object): 
     '''Parse xml file'''
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, user_fields: dict):
         super().__init__()
         self.file_path = file_path
         self.xml_root = None
+        self.user_fields = user_fields
 
         self._get_file_encoding()
         
@@ -22,7 +23,7 @@ class XMLFileParser(object):
             if user:
                 # merge static values w/ data from user
                 user_dict = dict(registry_name=file_name, date=self.date,)\
-                    | {k: user.find(v).text for k, v in user_fields.items()} 
+                    | {k: user.find(v).text for k, v in self.user_fields.items()} 
 
                 if self._is_valid_user(user_dict):
                     # handle invvalid field for critical/non critical

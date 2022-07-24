@@ -20,6 +20,7 @@ class App(object):
         xml_parser = XMLFileParser(self.file_path)
         users = xml_parser.parse_xml(
             file_name=self._output_file_name,
+            logger=self.logger,
         )
         self._encoding = xml_parser.encoding
         # call csv writer
@@ -55,16 +56,24 @@ class App(object):
                 os.path.abspath(folder), 'log', 'parser.log'
             )
         )
-        self.logger.info(f"Logs setup complete for file {self._file_path}")
-
 
     def _validate_file_path(self,):
+        '''Check if file path is valid if file not xml move it to /bad folder'''
         if os.path.isfile(self._file_path):
             extension = os.path.splitext(self._file_path)[1]
             if extension == '.xml':
-                # logger.info(f"Parse file {self._file_path}")
+                self.logger.info(f"Parse file {self._file_path}")
                 return
-            # TODO move to bad folder
-            raise FileNotFoundError("Invalid XML file")        
+            self.logger.warning(f"Not a xml file: {self._file_path}")
+            os.makedirs(os.path.join(os.path.dirname(self._file_path), 'bad'),  
+                exist_ok=True) 
+            os.replace(
+                self._file_path, 
+                os.path.join(
+                    os.path.dirname(self._file_path),
+                    'bad',
+                    os.path.basename(self._file_path)
+                )
+            )
         raise FileNotFoundError(self._file_path)
 

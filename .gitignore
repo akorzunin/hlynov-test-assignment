@@ -34,6 +34,7 @@ Latest commit 9bf44b2 27 days ago
 docker.env
 *.csv
 *.ipynb
+*.test
 
 **/node_modules/
 # Byte-compiled / optimized / DLL files

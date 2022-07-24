@@ -1,10 +1,11 @@
+import os
 from xml.etree import ElementTree
 from xml.dom import minidom
 # from src.validation import user_fields
 
 class XMLFileParser(object): 
     '''Parse xml file'''
-    def __init__(self, file_path: str, user_fields: dict):
+    def __init__(self, file_path: str, user_fields: dict, ):
         super().__init__()
         self.file_path = file_path
         self.xml_root = None
@@ -12,17 +13,18 @@ class XMLFileParser(object):
 
         self._get_file_encoding()
         
-    def parse_xml(self, file_name: str, logger) -> ElementTree.Element:
+    def parse_xml(self, logger) -> ElementTree.Element:
         xml = ElementTree.parse(self.file_path)
         self.xml_root = xml.getroot()
         # collect satic values
         self.date = xml.find("./СлЧаст/ОбщСвСч/ИдФайл/ДатаФайл").text
 
         self.user_set = set()
+        base_file = os.path.basename(self.file_path)
         for user in xml.iter('Плательщик'):
             if user:
                 # merge static values w/ data from user
-                user_dict = dict(registry_name=file_name, date=self.date,)\
+                user_dict = dict(registry_name=base_file, date=self.date,)\
                     | {k: user.find(v).text for k, v in self.user_fields.items()} 
 
                 if self._is_valid_user(user_dict):

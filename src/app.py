@@ -22,10 +22,9 @@ class App(object):
         # read xml
         xml_parser = XMLFileParser(
             file_path=self.file_path,
-            user_fields=validator.user_fields
+            user_fields=validator.user_fields,
         )
         users = xml_parser.parse_xml(
-            file_name=self._output_file_name,
             logger=self.logger,
         )
         self._encoding = xml_parser.encoding

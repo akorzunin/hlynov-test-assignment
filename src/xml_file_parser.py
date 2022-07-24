@@ -1,19 +1,16 @@
 import os
-# from xml.etree import ElementTree
 from lxml import etree as ElementTree
 from xml.dom import minidom
-
 from pydantic import ValidationError
 
 from src.validation import UserModel, Validator
 
 class XMLFileParser(object): 
     '''Parse xml file'''
-    def __init__(self, file_path: str, user_fields: dict, logger):
+    def __init__(self, file_path: str, logger):
         super().__init__()
         self.file_path = file_path
         self.xml_root = None
-        self.user_fields = user_fields
         self.logger = logger
 
         self._get_file_encoding()
@@ -32,7 +29,7 @@ class XMLFileParser(object):
                 # collect values from xml fields if they exist
                 user_data = {
                     k: user.find(v).text 
-                    for k, v in self.user_fields.items() 
+                    for k, v in validator.user_fields.items() 
                     if user.find(v) is not None
                 }
                 # merge static values w/ data from user

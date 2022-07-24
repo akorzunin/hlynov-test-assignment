@@ -94,7 +94,7 @@ def test_logs_exists(output: list) -> None:
 @file_paths
 def test_cli_run(file_path: str) -> None:
     '''Run program w/ test_files as input'''
-    process = subprocess.run(["python", "main.py", file_path])
+    process = subprocess.run(["python", "main.py", file_path, '0'])
     assert not process.returncode
 
 def test_csv_output_loc(output: list) -> None:

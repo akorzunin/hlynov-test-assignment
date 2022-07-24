@@ -3,26 +3,25 @@ import os
 from src.xml_file_parser import XMLFileParser
 from src.csv_writer import CSVWriter
 from src.logger import get_logger
-from src.validation import Validator
 
 class App(object): 
     '''docstring for App'''
-    def __init__(self, ):
+    def __init__(self, move_file: bool = False):
         super().__init__()
+        self.move_file = move_file
         self._encoding = 'utf-8'
 
 
-    def parse_file(self, file_path: str) -> None:
+    def parse_file(self, file_path: str):
         self._file_path = file_path
         self._setup_logger()
-        self._validate_file_path()
         self._get_output_path()
-        validator = Validator()
+        if not self._is_valid_file_path(): 
+            return self._output_file_path
 
         # read xml
         xml_parser = XMLFileParser(
             file_path=self.file_path,
-            user_fields=validator.user_fields,
             logger=self.logger,
         )
         users = xml_parser.parse_xml()
@@ -35,6 +34,8 @@ class App(object):
             encoding=self.encoding,
         )
         self.logger.info(f"✅ File {self._file_path} successfully parsed")
+        if self.move_file:
+            self._move_file_to_folder("arh")
         return self._output_file_path
 
     @property
@@ -61,23 +62,28 @@ class App(object):
             )
         )
 
-    def _validate_file_path(self,):
+    def _is_valid_file_path(self,):
         '''Check if file path is valid if file not xml move it to /bad folder'''
         if os.path.isfile(self._file_path):
             extension = os.path.splitext(self._file_path)[1]
             if extension == '.xml':
                 self.logger.info(f"▶ Parse file {self._file_path}")
-                return
+                return True
             self.logger.warning(f"⛔ Not a xml file: {self._file_path}")
-            os.makedirs(os.path.join(os.path.dirname(self._file_path), 'bad'),  
-                exist_ok=True) 
-            os.replace(
-                self._file_path, 
-                os.path.join(
-                    os.path.dirname(self._file_path),
-                    'bad',
-                    os.path.basename(self._file_path)
-                )
-            )
+            if self.move_file:
+                self._move_file_to_folder("bad")
+            return False
         raise FileNotFoundError(self._file_path)
+
+    def _move_file_to_folder(self, folder_name: str):
+        os.makedirs(os.path.join(os.path.dirname(self._file_path), folder_name),  
+            exist_ok=True) 
+        os.replace(
+            self._file_path, 
+            os.path.join(
+                os.path.dirname(self._file_path),
+                folder_name,
+                os.path.basename(self._file_path)
+            )
+        )
 

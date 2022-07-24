@@ -2,15 +2,6 @@
 from typing import Optional
 from pydantic import BaseModel, validator
 import re
-col_descriptions = dict(
-    registry_name='Имя файла реестра',
-    date='Дата', 
-    personal_account='Лицевой счет',
-    full_name='ФИО',
-    address='Адрес',
-    period='Период',
-    total='Сумма',
-)
 
 class Validator(object): 
     '''docstring for Validator'''
@@ -26,11 +17,37 @@ class Validator(object):
             period="Период",
             total="Сумма",
         )
+    @property
+    def csv_fields(self):
+        return dict(
+            registry_name='ИмяФайлаРеестра',
+            date='Дата', 
+            personal_account='ЛицевойСчет',
+            full_name='ФИО',
+            address='Адрес',
+            period='Период',
+            total='Сумма',
+        )
+    @property
+    def critical_fields(self):
+        return dict(
+            registry_name='ИмяФайлаРеестра',
+            date='Дата', 
+            personal_account="ЛицСч",
+            full_name="ФИО",
+            period="Период",
+        )
+    @property
+    def not_critical_fields(self):
+        return dict(
+            address="Адрес",
+            total="Сумма",
+        )
 
 class UserModel(BaseModel):   
     registry_name: str 
     date: str 
-    personal_account: str 
+    personal_account: int 
     full_name: str 
     address: Optional[str] 
     period: str 
@@ -52,6 +69,7 @@ class UserModel(BaseModel):
         return v
     @validator('total')
     def tatal_must_be_unsigned_float(cls, v):
-        v_float = float(v)
-        assert float(v) >= 0
-        return f"{v_float:.2f}"  
+        if v is not None:
+            v_float = float(v)
+            assert float(v) >= 0
+            return f"{v_float:.2f}" 

@@ -23,10 +23,9 @@ class App(object):
         xml_parser = XMLFileParser(
             file_path=self.file_path,
             user_fields=validator.user_fields,
-        )
-        users = xml_parser.parse_xml(
             logger=self.logger,
         )
+        users = xml_parser.parse_xml()
         self._encoding = xml_parser.encoding
         # call csv writer
         csv_writer = CSVWriter()
@@ -35,7 +34,7 @@ class App(object):
             users=users,
             encoding=self.encoding,
         )
-        self.logger.info(f"File {self._file_path} successfully parsed")
+        self.logger.info(f"✅ File {self._file_path} successfully parsed")
         return self._output_file_path
 
     @property
@@ -67,9 +66,9 @@ class App(object):
         if os.path.isfile(self._file_path):
             extension = os.path.splitext(self._file_path)[1]
             if extension == '.xml':
-                self.logger.info(f"Parse file {self._file_path}")
+                self.logger.info(f"▶ Parse file {self._file_path}")
                 return
-            self.logger.warning(f"Not a xml file: {self._file_path}")
+            self.logger.warning(f"⛔ Not a xml file: {self._file_path}")
             os.makedirs(os.path.join(os.path.dirname(self._file_path), 'bad'),  
                 exist_ok=True) 
             os.replace(

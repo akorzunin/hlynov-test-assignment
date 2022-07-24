@@ -8,6 +8,7 @@ authors = ["WildElaeagnus <54314123+akorzunin@users.noreply.github.com>"]
 python = "^3.9"
 loguru = "^0.6.0"
 pydantic = "^1.9.1"
+lxml = "^4.9.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

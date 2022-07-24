@@ -6,9 +6,11 @@ def get_logger(log_file_path):
     logger.add(
         sink=log_file_path,
         format=format,
+        rotation="1 MB",
+        level='INFO',
     )
     logger.add(
         sink=sys.stdout,
-        format=format
+        format=format,
     )
     return logger

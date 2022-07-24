@@ -1,4 +1,3 @@
-from xml.etree import ElementTree as ET
 import csv
 
 class CSVWriter(object): 
@@ -7,10 +6,10 @@ class CSVWriter(object):
         super().__init__()
 
     def write_csv(self, file_path: str, users, encoding: str = 'utf-8',):
-        with open(file_path, 'w', encoding=encoding) as csvfile:
+        with open(file_path, 'w', encoding=encoding, newline='') as csvfile:
             csvfile_writer = csv.writer(
                 csvfile,
                 delimiter =';',
             )
             for user in users:
-                csvfile_writer.writerow(user.values())
+                csvfile_writer.writerow(list(user.values()))

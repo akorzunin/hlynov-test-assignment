@@ -29,7 +29,7 @@ class XMLFileParser(object):
         validator = Validator()
         base_file = os.path.basename(self.file_path)
         for user in xml.iter('Плательщик'):
-            if user:
+            if user is not None:
                 # collect values from xml fields if they exist
                 user_data = {
                     k: user.find(v).text

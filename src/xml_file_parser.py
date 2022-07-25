@@ -3,7 +3,7 @@ from typing import Iterator, Set
 from lxml import etree as ElementTree
 from xml.dom import minidom
 from pydantic import ValidationError
-from loguru import Logger
+from loguru._logger import Logger
 
 from src.validation import UserModel, Validator
 

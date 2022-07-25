@@ -1,5 +1,6 @@
 import sys
-from loguru import logger, Logger
+from loguru import logger
+from loguru._logger import Logger
 
 
 def get_logger(log_file_path: str) -> Logger:

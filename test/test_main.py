@@ -52,7 +52,7 @@ def parser():
     return app
 
 @pytest.fixture(params=test_files['abs_file_paths'])
-def output(request) -> list:
+def output(request) -> tuple:
     '''Get path to pased file'''
     return app.parse_file(
         file_path=request.param

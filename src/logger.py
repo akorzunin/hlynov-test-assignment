@@ -1,7 +1,9 @@
 import sys
-from loguru import logger
-def get_logger(log_file_path):
-    format='{time} [{level}] {message}'
+from loguru import logger, Logger
+
+
+def get_logger(log_file_path: str) -> Logger:
+    format = '{time} [{level}] {message}'
     logger.remove()
     logger.add(
         sink=log_file_path,

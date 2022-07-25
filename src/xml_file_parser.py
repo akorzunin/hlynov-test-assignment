@@ -1,26 +1,30 @@
 import os
+from typing import Iterator, Set
 from lxml import etree as ElementTree
 from xml.dom import minidom
 from pydantic import ValidationError
+from loguru import Logger
 
 from src.validation import UserModel, Validator
 
-class XMLFileParser(object): 
+
+class XMLFileParser(object):
     '''Parse xml file'''
-    def __init__(self, file_path: str, logger):
+
+    def __init__(self, file_path: str, logger: Logger):
         super().__init__()
         self.file_path = file_path
         self.xml_root = None
         self.logger = logger
 
         self._get_file_encoding()
-        
-    def parse_xml(self, ):
+
+    def parse_xml(self, ) -> Iterator[dict]:
         xml = ElementTree.parse(self.file_path)
         self.xml_root = xml.getroot()
         # collect satic values
         self.date = xml.find("./СлЧаст/ОбщСвСч/ИдФайл/ДатаФайл").text
-        self.user_set = set()
+        self.user_set: Set[str] = set()
         # allocate scatic objects to cunstruct user data from models
         validator = Validator()
         base_file = os.path.basename(self.file_path)
@@ -28,8 +32,8 @@ class XMLFileParser(object):
             if user:
                 # collect values from xml fields if they exist
                 user_data = {
-                    k: user.find(v).text 
-                    for k, v in validator.user_fields.items() 
+                    k: user.find(v).text
+                    for k, v in validator.user_fields.items()
                     if user.find(v) is not None
                 }
                 # merge static values w/ data from user
@@ -42,10 +46,10 @@ class XMLFileParser(object):
                     self._handle_invalid_user(e, validator, user, user_dict)
                     continue
                 if self._is_uniqiue_user(user_dict):
-                        yield valid_user
+                    yield valid_user
                 # no duplicate user
-                self.logger.warning(f'♊ Duplicate user is skipped: {user_dict} ')
-
+                self.logger.warning(
+                    f'♊ Duplicate user is skipped: {user_dict} ')
 
     def _get_file_encoding(self):
         with open(self.file_path, 'rb') as f:
@@ -53,7 +57,8 @@ class XMLFileParser(object):
             header = minidom.parseString(f'{line.decode()}<a></a>')
             self.encoding = header.encoding
 
-    def _handle_invalid_user(self, e: Exception, validator, user, user_dict):
+    def _handle_invalid_user(self, e: ValidationError, validator: Validator,
+                             user: ElementTree._Element, user_dict: dict):
         # get field name
         err_field_name = e.errors()[0]['loc'][0]
         if err_field_name in validator.critical_fields.keys():
@@ -74,9 +79,8 @@ class XMLFileParser(object):
 
     def _is_uniqiue_user(self, user: dict) -> bool:
         '''check if user have unique personal_account and period fields'''
-        unique_pair = user['personal_account']+"_"+user['period'] 
+        unique_pair = user['personal_account']+"_"+user['period']
         if unique_pair in self.user_set:
             return False
         self.user_set.add(unique_pair)
         return True
-

@@ -4,20 +4,21 @@ from src.xml_file_parser import XMLFileParser
 from src.csv_writer import CSVWriter
 from src.logger import get_logger
 
-class App(object): 
-    '''docstring for App'''
+
+class App(object):
+    '''App to parse XML files'''
+
     def __init__(self, move_file: bool = False):
         super().__init__()
         self.move_file = move_file
         self._encoding = 'utf-8'
 
-
-    def parse_file(self, file_path: str):
+    def parse_file(self, file_path: str) -> str:
         self._file_path = file_path
         self._setup_logger()
+        if not self._is_valid_file_path():
+            return self._file_path
         self._get_output_path()
-        if not self._is_valid_file_path(): 
-            return self._output_file_path
 
         # read xml
         xml_parser = XMLFileParser(
@@ -39,11 +40,11 @@ class App(object):
         return self._output_file_path
 
     @property
-    def file_path(self):
+    def file_path(self) -> str:
         return self._file_path
-    
+
     @property
-    def encoding(self):
+    def encoding(self) -> str:
         return self._encoding
 
     def _get_output_path(self):
@@ -62,7 +63,7 @@ class App(object):
             )
         )
 
-    def _is_valid_file_path(self,):
+    def _is_valid_file_path(self,) -> bool:
         '''Check if file path is valid if file not xml move it to /bad folder'''
         if os.path.isfile(self._file_path):
             extension = os.path.splitext(self._file_path)[1]
@@ -76,14 +77,13 @@ class App(object):
         raise FileNotFoundError(self._file_path)
 
     def _move_file_to_folder(self, folder_name: str):
-        os.makedirs(os.path.join(os.path.dirname(self._file_path), folder_name),  
-            exist_ok=True) 
+        os.makedirs(os.path.join(os.path.dirname(self._file_path), folder_name),
+                    exist_ok=True)
         os.replace(
-            self._file_path, 
+            self._file_path,
             os.path.join(
                 os.path.dirname(self._file_path),
                 folder_name,
                 os.path.basename(self._file_path)
             )
         )
-
